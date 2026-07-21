@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合約自動產生器 V11.1 (現代 SaaS 質感版 - 修復)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.js"></script>
+    <script src="https://unpkg.com/docxtemplater@3.37.11/build/docxtemplater.js"></script>
+    <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    
+    <style>
+        /* 現代 SaaS 質感設計 */
+        body { 
+            background-color: #f4f7f9; 
+            color: #334155; 
+            padding-bottom: 100px; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        
+        .card { 
+            background: #ffffff; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04); 
+            border: none; 
+            margin-bottom: 24px; 
+            padding: 24px; 
+        }
+        
+        .card-header { 
+            background-color: transparent; 
+            padding: 0 0 16px 0; 
+            margin-bottom: 20px; 
+            border-bottom: 1px solid #f1f5f9; 
+            color: #1e293b; 
+            font-weight: 700; 
+            font-size: 1.15rem; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        
+        .header-title { display: flex; align-items: center; }
+        .header-line { width: 4px; height: 20px; background-color: #1e3a8a; margin-right: 12px; border-radius: 2px; }
+        .card-body { padding: 0; }
+        
+        /* 按鈕風格 */
+        .btn-primary { background-color: #1e3a8a; border-color: #1e3a8a; font-weight: 500; }
+        .btn-primary:hover { background-color: #152b66; border-color: #152b66; }
+        .btn-outline-primary { color: #1e3a8a; border-color: #1e3a8a; font-weight: 500; }
+        .btn-outline-primary:hover, .btn-check:checked + .btn-outline-primary { background-color: #1e3a8a; color: white; border-color: #1e3a8a; }
+        
+        /* 輸入框風格 */
+        .form-control, .form-select, .input-group-text { border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: none; transition: all 0.2s; color: #334155; }
+        .form-control:focus { border-color: #1e3a8a; box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1); }
+        .input-group-text { background-color: #f8fafc; }
+        
+        /* 提示框風格 */
+        .alert-success { background-color: #f0fdf4; color: #166534; border: none; border-radius: 8px; }
+        .alert-warning { background-color: #fffbeb; color: #92400e; border: none; border-radius: 8px; }
+        
+        /* 區塊背景 */
+        .bulk-zone { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; }
+        
+        /* 刪除按鈕 */
+        .remove-btn { color: #ef4444; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: 0.2s; }
+        .remove-btn:hover { color: #b91c1c; }
+        
+        /* 底部浮動列 */
+        .bottom-bar { 
+            position: fixed; 
+            bottom: 0; left: 0; right: 0; 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(8px); 
+            padding: 15px 24px; 
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.06); 
+            z-index: 1000; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-top: 1px solid #f1f5f9; 
+        }
+        .totals-display { font-size: 1.15rem; font-weight: 700; color: #334155; }
+        .text-danger { color: #e11d48 !important; } 
+        .text-primary { color: #1e3a8a !important; }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2 class="mb-4 text-center fw-bold" style="color: #1e293b;">📄 JW 買賣合約自動產生器</h2>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="header-title"><div class="header-line"></div>1. 選擇合約類型</div>
+        </div>
+        <div class="card-body">
+            <div class="mb-2">
+                <label class="form-label text-primary fw-bold">請選擇本次要產出的合約類型 (系統將自動套用樣板並命名)</label>
+                <div class="d-flex flex-wrap gap-2">
+                    <input type="radio" class="btn-check" name="contractType" id="type1" value="yearly_return" checked onchange="toggleOrigDate()">
+                    <label class="btn btn-outline-primary" for="type1">年度合約 (可收退)</label>
+
+                    <input type="radio" class="btn-check" name="contractType" id="type2" value="yearly_firm" onchange="toggleOrigDate()">
+                    <label class="btn btn-outline-primary" for="type2">年度合約 (Firm Sale)</label>
+
+                    <input type="radio" class="btn-check" name="contractType" id="type3" value="supp_return" onchange="toggleOrigDate()">
+                    <label class="btn btn-outline-primary" for="type3">補充協議書 (可收退)</label>
+
+                    <input type="radio" class="btn-check" name="contractType" id="type4" value="supp_firm" onchange="toggleOrigDate()">
+                    <label class="btn btn-outline-primary" for="type4">補充協議書 (Firm Sale)</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="header-title"><div class="header-line"></div>2. 乙方基本資料</div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6"><label class="form-label text-muted small fw-bold">乙方公司名稱</label><input type="text" id="companyName" class="form-control" value=""></div>
+                <div class="col-md-6"><label class="form-label text-muted small fw-bold">代表人</label><input type="text" id="repName" class="form-control" value=""></div>
+                <div class="col-md-4"><label class="form-label text-muted small fw-bold">統一編號</label><input type="text" id="taxId" class="form-control" value=""></div>
+                <div class="col-md-4"><label class="form-label text-muted small fw-bold">聯絡電話</label><input type="text" id="phone" class="form-control" value=""></div>
+                <div class="col-md-12"><label class="form-label text-muted small fw-bold">公司地址</label><input type="text" id="address" class="form-control" value=""></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="header-title"><div class="header-line"></div>3. 日期與活動設定</div>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4" id="origDateContainer" style="display: none;">
+                    <label class="form-label text-muted small fw-bold">原年度合約簽署日</label>
+                    <input type="date" id="origDate" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-muted small fw-bold">本次簽署日</label>
+                    <input type="date" id="signDate" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-muted small fw-bold">活動開始日</label>
+                    <input type="date" id="eventDate" class="form-control" onchange="document.getElementById('bulkDate').value = this.value;">
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label text-muted small fw-bold">促銷活動名稱</label>
+                    <input type="text" id="eventName" class="form-control" value="">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="header-title"><div class="header-line"></div>4. 買賣標的物與交貨設定</div>
+            <button class="btn btn-sm btn-light border fw-bold text-secondary" onclick="addProduct()">＋手動新增一列</button>
+        </div>
+        <div class="card-body">
+            
+            <div class="alert alert-success small py-3 mb-3 d-flex align-items-center">
+                <span style="font-size: 1.5rem; margin-right: 12px;">💡</span>
+                <div>
+                    <b>Excel貼上功能：</b>請點擊下方第一列的「品項名稱」或「數量」格子，然後按下 <code>Ctrl + V</code>。<br>
+                    建議 <b class="text-dark">一欄一欄複製（例如：先複製整排品項貼上，再複製整排數量貼上）</b>，系統會自動為您向下擴充填滿表格！
+                </div>
+            </div>
+
+            <div class="row g-2 mb-4 align-items-center p-3 bulk-zone mx-0">
+                <div class="col-12 col-md-auto fw-bold text-primary mb-2 mb-md-0">⚡ 批次快速套用：</div>
+                <div class="col-12 col-md-auto">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">公關品數量</span>
+                        <input type="number" id="bulkPrQty" class="form-control" style="max-width: 100px;" placeholder="輸入數量">
+                        <button class="btn btn-primary" onclick="applyBulkPrQty()">套用全部</button>
+                    </div>
+                </div>
+                <div class="col-12 col-md-auto mt-2 mt-md-0">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text">交貨日期</span>
+                        <input type="date" id="bulkDate" class="form-control">
+                        <button class="btn btn-primary" onclick="applyBulkDate()">套用全部</button>
+                    </div>
+                </div>
+                <div class="col-12 col-md-auto mt-2 mt-md-0 ms-md-auto">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text fw-bold">營業稅率 (%)</span>
+                        <input type="number" id="taxRate" class="form-control text-center fw-bold text-primary" style="max-width: 80px;" value="5" oninput="calculateTotals()">
+                    </div>
+                </div>
+            </div>
+
+            <div id="productContainer">
+                <div class="row g-2 mb-3 align-items-end product-row pb-3 border-bottom">
+                    <div class="col-md-3"><label class="form-label text-muted small">品項名稱</label><input type="text" class="form-control p-name" value=""></div>
+                    <div class="col-md-2"><label class="form-label text-muted small">數量</label><input type="number" class="form-control p-qty" value="" oninput="calculateTotals()"></div>
+                    <div class="col-md-2"><label class="form-label text-muted small">單價(未稅)</label><input type="number" class="form-control p-price" value="" oninput="calculateTotals()"></div>
+                    <div class="col-md-2"><label class="form-label text-muted small">公關品數量</label><input type="number" class="form-control p-prQty" value=""></div>
+                    <div class="col-md-2"><label class="form-label text-muted small">交貨日期</label><input type="date" class="form-control p-date"></div>
+                    <div class="col-md-1 text-center"><span class="remove-btn" onclick="this.closest('.product-row').remove(); calculateTotals();">✖ 刪除</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="header-title"><div class="header-line"></div>5. 附件一：產品型錄設定</div>
+            <button class="btn btn-sm btn-light border fw-bold text-secondary" onclick="addCatalog()">＋新增型錄</button>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning small py-2 mb-3 text-dark fw-bold d-flex align-items-center">
+                <span style="font-size: 1.2rem; margin-right: 8px;">⚠️</span>
+                由於技術緣故，現在無法支援在附件附上圖片，如果想貼上截圖的同仁請直接生成文件後再手動貼上>&lt; by Laurence
+            </div>
+            
+            <div id="catalogContainer">
+                 <!-- 預設留空 -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bottom-bar">
+    <div class="totals-display" id="totalDisplay">
+        數量總計: 0 | 未稅總計: $0 | 營業稅: $0 | 💰含稅總金額: $0
+    </div>
+    <button class="btn btn-primary btn-lg rounded-pill px-4" onclick="generateContract()">📥 產生合約 (DOCX)</button>
+</div>
+
+<script>
+    function toggleOrigDate() {
+        const type = document.querySelector('input[name="contractType"]:checked').value;
+        const container = document.getElementById('origDateContainer');
+        if (type === 'supp_return' || type === 'supp_firm') {
+            container.style.display = 'block';
+        } else {
+            container.style.display = 'none';
+        }
+    }
+    toggleOrigDate();
+
+    function applyBulkPrQty() {
+        const val = document.getElementById('bulkPrQty').value;
+        if (val === "") { alert("請先輸入數量！"); return; }
+        document.querySelectorAll('.p-prQty').forEach(input => input.value = val);
+    }
+
+    function applyBulkDate() {
+        const val = document.getElementById('bulkDate').value;
+        if (val === "") { alert("請先選擇日期！"); return; }
+        document.querySelectorAll('.p-date').forEach(input => input.value = val);
+    }
+
+    // 儲存格連動貼上
+    document.getElementById('productContainer').addEventListener('paste', function(e) {
+        if (e.target.tagName !== 'INPUT') return;
+        const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+        
+        // 修正了這裡的正規表達式，讓系統正確辨識換行和 Tab
+        if (!pasteData || (!pasteData.includes('\t') && !pasteData.includes('\n'))) return; 
+        e.preventDefault(); 
+        
+        // 修正了換行切割邏輯
+        const lines = pasteData.split(/\r\n|\n|\r/).filter(line => line.trim() !== '' || line.includes('\t'));
+        if (lines.length === 0) return;
+        
+        const colClasses = ['p-name', 'p-qty', 'p-price', 'p-prQty', 'p-date'];
+        let startColIndex = -1;
+        for (let i = 0; i < colClasses.length; i++) {
+            if (e.target.classList.contains(colClasses[i])) { startColIndex = i; break; }
+        }
+        if (startColIndex === -1) return;
+        
+        const startRowElement = e.target.closest('.product-row');
+        const allRows = Array.from(document.querySelectorAll('.product-row'));
+        const startRowIndex = allRows.indexOf(startRowElement);
+
+        lines.forEach((line, i) => {
+            let currentRowIndex = startRowIndex + i;
+            if (currentRowIndex >= document.querySelectorAll('.product-row').length) addProduct(); 
+            const currentRow = document.querySelectorAll('.product-row')[currentRowIndex];
+            
+            // 修正了 Tab 切割邏輯
+            const cells = line.split('\t');
+            cells.forEach((cellValue, j) => {
+                const targetColIndex = startColIndex + j;
+                if (targetColIndex < colClasses.length) {
+                    const input = currentRow.querySelector('.' + colClasses[targetColIndex]);
+                    if (input) {
+                        let val = cellValue.trim();
+                        if (['p-qty', 'p-price', 'p-prQty'].includes(colClasses[targetColIndex])) {
+                            val = val.replace(/,/g, '');
+                        }
+                        input.value = val;
+                    }
+                }
+            });
+        });
+        calculateTotals();
+    });
+
+    function formatROCDate(dateString) {
+        if (!dateString) return { year: "", month: "", day: "" };
+        const parts = dateString.split('-');
+        return { year: (parseInt(parts[0]) - 1911).toString(), month: parts[1].replace(/^0/, ''), day: parts[2].replace(/^0/, '') };
+    }
+
+    function calculateTotals() {
+        let totalQty = 0, totalAmt = 0;
+        const currentTaxRate = parseFloat(document.getElementById('taxRate').value || 0) / 100;
+
+        document.querySelectorAll('.product-row').forEach(row => {
+            const qty = parseInt(row.querySelector('.p-qty').value || 0);
+            const price = parseInt(row.querySelector('.p-price').value || 0);
+            totalQty += qty; totalAmt += (qty * price);
+        });
+        
+        const tax = Math.round(totalAmt * currentTaxRate);
+        const finalTotal = totalAmt + tax;
+        
+        document.getElementById('totalDisplay').innerHTML = `數量總計: <span class="text-primary">${totalQty}</span> | 未稅總計: <span class="text-primary">$${totalAmt.toLocaleString()}</span> | 營業稅: $${tax.toLocaleString()} | <span class='text-danger'>💰含稅總金額: $${finalTotal.toLocaleString()}</span>`;
+        return { totalQty, totalAmt, tax, finalTotal };
+    }
+    calculateTotals();
+
+    function addProduct(name='', qty='', price='', prQty='', date='') {
+        const html = `<div class="row g-2 mb-3 align-items-end product-row pb-3 border-bottom"><div class="col-md-3"><input type="text" class="form-control p-name" placeholder="品項名稱" value="${name}"></div><div class="col-md-2"><input type="number" class="form-control p-qty" placeholder="數量" oninput="calculateTotals()" value="${qty}"></div><div class="col-md-2"><input type="number" class="form-control p-price" placeholder="單價" oninput="calculateTotals()" value="${price}"></div><div class="col-md-2"><input type="number" class="form-control p-prQty" placeholder="公關品數量" value="${prQty}"></div><div class="col-md-2"><input type="date" class="form-control p-date" value="${date}"></div><div class="col-md-1 text-center"><span class="remove-btn" onclick="this.closest('.product-row').remove(); calculateTotals();">✖ 刪除</span></div></div>`;
+        document.getElementById('productContainer').insertAdjacentHTML('beforeend', html);
+    }
+
+    function addCatalog() {
+        const id = Date.now();
+        const html = `
+            <div class="row g-2 mb-3 catalog-row pb-3 border-bottom" id="cat-${id}">
+                <div class="col-md-11 text-inputs">
+                    <div class="row g-2">
+                        <div class="col-md-3"><input type="text" class="form-control c-name" placeholder="產品名稱"></div>
+                        <div class="col-md-2"><input type="text" class="form-control c-spec" placeholder="規格"></div>
+                        <div class="col-md-2"><input type="text" class="form-control c-weight" placeholder="重量"></div>
+                        <div class="col-md-3"><input type="text" class="form-control c-mat" placeholder="材質"></div>
+                        <div class="col-md-2"><input type="text" class="form-control c-print" placeholder="印刷"></div>
+                    </div>
+                </div>
+                <div class="col-md-1 text-center">
+                    <span class="remove-btn" onclick="this.closest('.catalog-row').remove();">✖ 刪除</span>
+                </div>
+            </div>`;
+        document.getElementById('catalogContainer').insertAdjacentHTML('beforeend', html);
+    }
+
+    async function generateContract() {
+        const contractType = document.querySelector('input[name="contractType"]:checked').value;
+        const companyName = document.getElementById('companyName').value || "廠商";
+        const eventName = document.getElementById('eventName').value || "活動名稱";
+
+        const templateMap = {
+            'yearly_return': 'yearly_return.docx',
+            'yearly_firm': 'yearly_firm.docx',
+            'supp_return': 'supp_return.docx',
+            'supp_firm': 'supp_firm.docx'
+        };
+        const templateFileName = templateMap[contractType];
+
+        try {
+            const response = await fetch(templateFileName);
+            if (!response.ok) {
+                throw new Error(`找不到背景樣板檔案：${templateFileName}\n請確認您有將 Word 檔案跟網頁放在同一個資料夾，並且檔名正確！`);
+            }
+            
+            const templateBuffer = await response.arrayBuffer();
+            const zip = new PizZip(templateBuffer);
+
+            const doc = new window.docxtemplater(zip, {
+                paragraphLoop: true,
+                linebreaks: true,
+                delimiters: { start: '{{', end: '}}' }, 
+                parser: function(tag) {
+                    // 修正了這裡的特殊字元替換邏輯
+                    const cleanTag = tag.replace(/[\s\u200B-\u200D\uFEFF]+/g, '');
+                    return {
+                        get: function(scope, context) {
+                            if (cleanTag === '.') return scope;
+                            let result = undefined;
+
+                            if (scope && typeof scope === 'object') {
+                                for (let key in scope) {
+                                    if (key.replace(/[\s\u200B-\u200D\uFEFF]+/g, '') === cleanTag) {
+                                        if (scope[key] !== undefined && scope[key] !== null) { result = scope[key]; break; }
+                                    }
+                                }
+                            }
+                            
+                            if (result === undefined && window.GLOBAL_DOC_DATA) {
+                                for (let key in window.GLOBAL_DOC_DATA) {
+                                    if (key.replace(/[\s\u200B-\u200D\uFEFF]+/g, '') === cleanTag) {
+                                        if (window.GLOBAL_DOC_DATA[key] !== undefined && window.GLOBAL_DOC_DATA[key] !== null) { result = window.GLOBAL_DOC_DATA[key]; break; }
+                                    }
+                                }
+                            }
+
+                            return result !== undefined ? result : "";
+                        }
+                    };
+                }
+            });
+
+            const origD = formatROCDate(document.getElementById('origDate').value);
+            const signD = formatROCDate(document.getElementById('signDate').value);
+            const eventD = formatROCDate(document.getElementById('eventDate').value);
+
+            const items = [];
+            document.querySelectorAll('.product-row').forEach(row => {
+                const qty = parseInt(row.querySelector('.p-qty').value || 0);
+                const price = parseInt(row.querySelector('.p-price').value || 0);
+                const pDateStr = row.querySelector('.p-date').value;
+                const rocD = formatROCDate(pDateStr);
+                
+                if (row.querySelector('.p-name').value === "" && qty === 0 && price === 0) return;
+
+                items.push({
+                    "品項": row.querySelector('.p-name').value || "",
+                    "數量": qty || "",
+                    "單價": price || "",
+                    "總計": (qty * price) > 0 ? (qty * price).toLocaleString() : "",
+                    "公關品數量": row.querySelector('.p-prQty').value || "0",
+                    "交貨日期": pDateStr ? `${rocD.year}年${rocD.month}月${rocD.day}日` : ""
+                });
+            });
+
+            const catalogs = [];
+            document.querySelectorAll('.catalog-row').forEach(row => {
+                catalogs.push({
+                    "is_text": true,
+                    "名稱": row.querySelector('.c-name').value || "",
+                    "規格": row.querySelector('.c-spec').value || "",
+                    "重量": row.querySelector('.c-weight').value || "",
+                    "材質": row.querySelector('.c-mat').value || "",
+                    "印刷": row.querySelector('.c-print').value || "",
+                    "圖片": "【產品圖片已另行提供，請參閱附件檔】"
+                });
+            });
+
+            const totals = calculateTotals();
+
+            window.GLOBAL_DOC_DATA = {
+                "乙方公司": companyName,
+                "代表人": document.getElementById('repName').value,
+                "公司地址": document.getElementById('address').value,
+                "聯絡電話": document.getElementById('phone').value,
+                "統一編號": document.getElementById('taxId').value,
+                "原合約年": origD.year, "原合約月": origD.month, "原合約日": origD.day,
+                "簽約年": signD.year, "簽約月": signD.month, "簽約日": signD.day,
+                "活動名稱": eventName,
+                "活動年": eventD.year, "活動月": eventD.month, "活動日": eventD.day,
+                "items": items,
+                "數量總計": totals.totalQty || "",
+                "金額總計": totals.totalAmt > 0 ? totals.totalAmt.toLocaleString() : "",
+                "營業稅": totals.tax > 0 ? totals.tax.toLocaleString() : "",
+                "合計金額": totals.finalTotal > 0 ? totals.finalTotal.toLocaleString() : "",
+                "總金額": totals.finalTotal > 0 ? totals.finalTotal.toLocaleString() : "",
+                "catalogs": catalogs
+            };
+
+            doc.render(window.GLOBAL_DOC_DATA);
+
+            const out = doc.getZip().generate({
+                type: "blob",
+                mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            });
+
+            let finalFileName = "自動產出_買賣合約書.docx";
+            if (contractType === 'yearly_return') {
+                finalFileName = `JW商品買賣合約書_${companyName}_免系統費_可收退_活動合約 (年度) 2026.docx`;
+            } else if (contractType === 'yearly_firm') {
+                finalFileName = `JW商品買賣合約書_${companyName}_firm sale_活動合約 (年度) 2026_部份修正.docx`;
+            } else if (contractType === 'supp_return') {
+                finalFileName = `補充協議書_可收退_${eventName}(for 年度合約).docx`;
+            } else if (contractType === 'supp_firm') {
+                finalFileName = `補充協議書_firm sale_${eventName}(for 年度合約).docx`;
+            }
+
+            saveAs(out, finalFileName);
+
+        } catch (error) {
+            console.error(error);
+            alert("🚨 發生錯誤！\n\n" + error.message);
+        }
+    }
+</script>
+
+</body>
+</html>
