@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>JW 買賣合約自動產生器 - 年度更新與維護手冊</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: #334155; max-width: 800px; margin: 0 auto; padding: 40px 20px; background-color: #f4f7f9; }
+        .container { background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
+        h1 { color: #1e293b; border-bottom: 3px solid #1e3a8a; padding-bottom: 15px; margin-top: 0; font-size: 1.8rem; }
+        h2 { color: #1e3a8a; margin-top: 40px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; font-size: 1.4rem; }
+        h3 { color: #475569; font-size: 1.1rem; margin-top: 25px; }
+        code { background-color: #f1f5f9; padding: 4px 8px; border-radius: 6px; color: #b45309; font-family: monospace; font-weight: bold; font-size: 0.95em; }
+        pre { background-color: #1e293b; color: #f8fafc; padding: 20px; border-radius: 8px; overflow-x: auto; font-size: 0.95rem; line-height: 1.5; }
+        pre code { background-color: transparent; color: inherit; padding: 0; font-weight: normal; }
+        ul, ol { padding-left: 20px; }
+        li { margin-bottom: 8px; }
+        .note { background-color: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px 20px; margin: 30px 0 10px 0; border-radius: 0 8px 8px 0; color: #166534; }
+        .highlight-note { background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px 20px; margin: 30px 0 10px 0; border-radius: 0 8px 8px 0; color: #1e40af; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 JW 買賣合約自動產生器 - 年度更新與維護手冊</h1>
+        <p>這份文件將引導你如何在拿到「新年度的 Word 公版合約」時，將其轉換為系統可辨識的格式，並順利更新到公司的專屬網頁上。不需懂程式碼，只要跟著步驟做即可！</p>
+
+        <h2>第一步：替換 Word 公版合約標籤</h2>
+        <p>系統是透過尋找 Word 檔案中的 <code>{{特定文字}}</code> 來填入資料的。請打開新的 Word 公版合約，將需要自動填寫的地方，替換成以下的專屬標籤（請注意大括號是英文半形，且不能有錯字）：</p>
+
+        <h3>1. 乙方基本資料</h3>
+        <ul>
+            <li>公司名稱：替換為 <code>{{乙方公司}}</code></li>
+            <li>代表人：替換為 <code>{{代表人}}</code></li>
+            <li>公司地址：替換為 <code>{{公司地址}}</code></li>
+            <li>聯絡電話：替換為 <code>{{聯絡電話}}</code></li>
+            <li>統一編號：替換為 <code>{{統一編號}}</code></li>
+        </ul>
+
+        <h3>2. 日期與活動設定</h3>
+        <ul>
+            <li>原合約日期：替換為 <code>{{原合約年}}</code> 年 <code>{{原合約月}}</code> 月 <code>{{原合約日}}</code> 日</li>
+            <li>本次簽署日：替換為 <code>{{簽約年}}</code> 年 <code>{{簽約月}}</code> 月 <code>{{簽約日}}</code> 日</li>
+            <li>活動開始日：替換為 <code>{{活動年}}</code> 年 <code>{{活動月}}</code> 月 <code>{{活動日}}</code> 日</li>
+            <li>促銷活動名稱：替換為 <code>{{活動名稱}}</code></li>
+        </ul>
+
+        <h3>3. 買賣標的物與交貨設定 (表格區塊)</h3>
+        <p>合約中的商品明細通常是一個表格。請在表格的<strong>資料列（不是標題列）</strong>的最左邊與最右邊，加上迴圈指令，系統才會根據貼上的行數自動往下長：</p>
+        <ul>
+            <li>資料列的最開頭請寫上：<code>{{#items}}</code></li>
+            <li>中間的格子請依序填入：<code>{{品項}}</code>、<code>{{數量}}</code>、<code>{{單價}}</code>、<code>{{總計}}</code>、<code>{{公關品數量}}</code>、<code>{{交貨日期}}</code></li>
+            <li>資料列的最結尾請寫上：<code>{{/items}}</code></li>
+        </ul>
+
+        <h3>4. 金額總計</h3>
+        <ul>
+            <li>數量總計：替換為 <code>{{數量總計}}</code></li>
+            <li>未稅總計：替換為 <code>{{金額總計}}</code></li>
+            <li>營業稅：替換為 <code>{{營業稅}}</code></li>
+            <li>含稅總金額：替換為 <code>{{合計金額}}</code> 或 <code>{{總金額}}</code></li>
+        </ul>
+
+        <h2>第二步：設定附件一 (產品型錄)</h2>
+        <p>請在合約書最後面的「附件一」區塊，<strong>直接貼上以下這整段指令</strong>（排版可以依照你喜歡的樣子用 Word 微調，但標籤字眼不可改）：</p>
+        <pre><code>{{#catalogs}}
+產品名稱：{{名稱}}
+規格：{{規格}}
+重量：{{重量}}
+材質：{{材質}}
+印刷：{{印刷}}
+圖片：{{圖片}}
+{{/catalogs}}</code></pre>
+        <p><em>(備註：系統預設會將 <code>{{圖片}}</code> 的位置自動替換為「【產品圖片已另行提供，請參閱附件檔】」字樣。)</em></p>
+
+        <h2>第三步：檔案命名規則</h2>
+        <p>Word 檔案設定好並存檔後，<strong>必須嚴格遵守以下英文命名</strong>，系統才有辦法抓到對應的檔案。請將四份檔案分別重新命名為：</p>
+        <ol>
+            <li>年度合約 (可收退) ➔ <strong><code>yearly_return.docx</code></strong></li>
+            <li>年度合約 (Firm Sale) ➔ <strong><code>yearly_firm.docx</code></strong></li>
+            <li>補充協議書 (可收退) ➔ <strong><code>supp_return.docx</code></strong></li>
+            <li>補充協議書 (Firm Sale) ➔ <strong><code>supp_firm.docx</code></strong></li>
+        </ol>
+        
+        <!-- 🎯 新增的更新提醒 -->
+        <div class="highlight-note">
+            💡 <strong>如果年度合約更新並完成以上步驟，就請Email給Laurence處理剩餘上傳事項！<br>
+            ✉️ 郵箱：</strong><a href="mailto:hanhanrao@gmail.com">hanhanrao@gmail.com</a>
+        </div>
+
+        <h2>第四步：上傳至 GitHub 雲端更新網頁</h2>
+        <p>檔案準備好後，最後一步就是把新檔案丟到雲端覆蓋舊檔案，網站就會自動更新。</p>
+        <ol>
+            <li><strong>登入帳號</strong>：前往 GitHub 網站並登入公司的帳號。</li>
+            <li><strong>進入專案</strong>：在左側列表找到並點擊合約系統的專案資料夾（例如 <code>jw-contract</code>）。</li>
+            <li><strong>上傳檔案</strong>：
+                <ul>
+                    <li>點擊畫面上方偏右的 <strong>「Add file」</strong> 按鈕。</li>
+                    <li>從下拉選單中選擇 <strong>「Upload files」</strong>。</li>
+                    <li>將你剛剛準備好的 4 份新版 Word 檔案全部拖曳進網頁的框框中。</li>
+                </ul>
+            </li>
+            <li><strong>確認覆蓋</strong>：等待檔案讀取完畢後，點擊畫面最下方的綠色按鈕 <strong>「Commit changes」</strong>。</li>
+            <li><strong>等待生效</strong>：上傳完成後，系統大約需要 1 到 3 分鐘的時間在背景更新。稍候片刻，重新整理你們的專屬網址，明年度的新版合約產生器就正式上線啦！</li>
+        </ol>
+        
+        <div class="note">
+            💡 <strong>貼心提醒：</strong>因為系統已經加入了「反快取」指令，所以同仁們未來打開網頁時都會自動抓取最新版，不需特別手動清除暫存。
+        </div>
+    </div>
+</body>
+</html>
