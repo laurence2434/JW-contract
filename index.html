@@ -3,7 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>合約自動產生器 V11.1 (現代 SaaS 質感版 - 修復)</title>
+    <!-- 🎯 願望 3：乾淨俐落的網站名稱 -->
+    <title>合約自動產生器 V12.0</title>
+    
+    <!-- 🎯 願望 4：反快取咒語，強迫瀏覽器抓最新版 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <script src="https://unpkg.com/pizzip@3.1.4/dist/pizzip.js"></script>
@@ -60,8 +67,10 @@
         .alert-success { background-color: #f0fdf4; color: #166534; border: none; border-radius: 8px; }
         .alert-warning { background-color: #fffbeb; color: #92400e; border: none; border-radius: 8px; }
         
-        /* 區塊背景 */
+        /* Excel 貼上區 */
         .bulk-zone { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; }
+        .excel-paste-zone { background-color: #f8fafc; border: 2px dashed #cbd5e1; transition: 0.3s; color: #64748b; font-weight: bold; }
+        .excel-paste-zone:focus { background-color: #f1f5f9; border-color: #1e3a8a; outline: none; box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1); }
         
         /* 刪除按鈕 */
         .remove-btn { color: #ef4444; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: 0.2s; }
@@ -195,6 +204,11 @@
                 </div>
             </div>
 
+            <!-- 🎯 願望 1：復活備用大框框 -->
+            <div class="mb-4">
+                <input type="text" id="excelPaste" class="form-control text-center excel-paste-zone py-2" placeholder="📋 備用大框框：若無法直接點格子貼上，也可點擊此處按 Ctrl+V (支援多欄位整塊貼上)">
+            </div>
+
             <div id="productContainer">
                 <div class="row g-2 mb-3 align-items-end product-row pb-3 border-bottom">
                     <div class="col-md-3"><label class="form-label text-muted small">品項名稱</label><input type="text" class="form-control p-name" value=""></div>
@@ -257,16 +271,33 @@
         document.querySelectorAll('.p-date').forEach(input => input.value = val);
     }
 
+    // 🎯 願望 2：支援 Tab 鍵，在最後一行的日期欄位按下 Tab，會自動新增一列並將焦點移至新品項名稱
+    document.getElementById('productContainer').addEventListener('keydown', function(e) {
+        if (e.key === 'Tab' && e.target.classList.contains('p-date')) {
+            const allRows = Array.from(document.querySelectorAll('.product-row'));
+            const currentRow = e.target.closest('.product-row');
+            
+            // 確認是不是停在目前最後一列
+            if (allRows.indexOf(currentRow) === allRows.length - 1) {
+                e.preventDefault(); // 阻止原本會跳離表格的 Tab 行為
+                addProduct(); // 自動新增一列
+                
+                // 將輸入焦點（游標）移動到新列的第一格 (品項名稱)
+                const newRows = document.querySelectorAll('.product-row');
+                const lastRow = newRows[newRows.length - 1];
+                lastRow.querySelector('.p-name').focus();
+            }
+        }
+    });
+
     // 儲存格連動貼上
     document.getElementById('productContainer').addEventListener('paste', function(e) {
         if (e.target.tagName !== 'INPUT') return;
         const pasteData = (e.clipboardData || window.clipboardData).getData('text');
         
-        // 修正了這裡的正規表達式，讓系統正確辨識換行和 Tab
         if (!pasteData || (!pasteData.includes('\t') && !pasteData.includes('\n'))) return; 
         e.preventDefault(); 
         
-        // 修正了換行切割邏輯
         const lines = pasteData.split(/\r\n|\n|\r/).filter(line => line.trim() !== '' || line.includes('\t'));
         if (lines.length === 0) return;
         
@@ -286,7 +317,6 @@
             if (currentRowIndex >= document.querySelectorAll('.product-row').length) addProduct(); 
             const currentRow = document.querySelectorAll('.product-row')[currentRowIndex];
             
-            // 修正了 Tab 切割邏輯
             const cells = line.split('\t');
             cells.forEach((cellValue, j) => {
                 const targetColIndex = startColIndex + j;
@@ -303,6 +333,41 @@
             });
         });
         calculateTotals();
+    });
+
+    // 🎯 願望 1：備用大框框貼上邏輯
+    document.getElementById('excelPaste').addEventListener('paste', function(e) {
+        e.preventDefault();
+        const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+        if (!pasteData) return;
+        
+        const rows = pasteData.split(/\r\n|\n|\r/).filter(r => r.trim() !== '');
+        
+        // 如果目前表格只有一列且是空的，就清空它以免礙眼
+        const existingRows = document.querySelectorAll('.product-row');
+        if (existingRows.length === 1) {
+            const pName = existingRows[0].querySelector('.p-name').value;
+            if (pName === '') existingRows[0].remove(); 
+        }
+        
+        rows.forEach(r => {
+            const cols = r.split('\t');
+            addProduct(
+                cols[0] ? cols[0].trim() : '', 
+                cols[1] ? cols[1].replace(/,/g,'').trim() : '', 
+                cols[2] ? cols[2].replace(/,/g,'').trim() : '', 
+                cols[3] ? cols[3].replace(/,/g,'').trim() : '', 
+                cols[4] ? cols[4].trim() : ''
+            );
+        });
+        
+        calculateTotals();
+        
+        const inputElement = this;
+        inputElement.placeholder = "✅ 匯入成功！您可以繼續貼上追加資料...";
+        setTimeout(() => { 
+            inputElement.placeholder = "📋 備用大框框：若無法直接點格子貼上，也可點擊此處按 Ctrl+V (支援多欄位整塊貼上)"; 
+        }, 3000);
     });
 
     function formatROCDate(dateString) {
@@ -381,7 +446,6 @@
                 linebreaks: true,
                 delimiters: { start: '{{', end: '}}' }, 
                 parser: function(tag) {
-                    // 修正了這裡的特殊字元替換邏輯
                     const cleanTag = tag.replace(/[\s\u200B-\u200D\uFEFF]+/g, '');
                     return {
                         get: function(scope, context) {
