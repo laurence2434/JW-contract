@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 🎯 願望 3：乾淨俐落的網站名稱 -->
-    <title>合約自動產生器 V12.0</title>
+    <title>合約自動產生器 V12.1</title>
     
-    <!-- 🎯 願望 4：反快取咒語，強迫瀏覽器抓最新版 -->
+    <!-- 反快取咒語，強迫瀏覽器抓最新版 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -18,7 +17,6 @@
     <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
     
     <style>
-        /* 現代 SaaS 質感設計 */
         body { 
             background-color: #f4f7f9; 
             color: #334155; 
@@ -52,31 +50,25 @@
         .header-line { width: 4px; height: 20px; background-color: #1e3a8a; margin-right: 12px; border-radius: 2px; }
         .card-body { padding: 0; }
         
-        /* 按鈕風格 */
         .btn-primary { background-color: #1e3a8a; border-color: #1e3a8a; font-weight: 500; }
         .btn-primary:hover { background-color: #152b66; border-color: #152b66; }
         .btn-outline-primary { color: #1e3a8a; border-color: #1e3a8a; font-weight: 500; }
         .btn-outline-primary:hover, .btn-check:checked + .btn-outline-primary { background-color: #1e3a8a; color: white; border-color: #1e3a8a; }
         
-        /* 輸入框風格 */
         .form-control, .form-select, .input-group-text { border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: none; transition: all 0.2s; color: #334155; }
         .form-control:focus { border-color: #1e3a8a; box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1); }
         .input-group-text { background-color: #f8fafc; }
         
-        /* 提示框風格 */
         .alert-success { background-color: #f0fdf4; color: #166534; border: none; border-radius: 8px; }
         .alert-warning { background-color: #fffbeb; color: #92400e; border: none; border-radius: 8px; }
         
-        /* Excel 貼上區 */
         .bulk-zone { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; }
         .excel-paste-zone { background-color: #f8fafc; border: 2px dashed #cbd5e1; transition: 0.3s; color: #64748b; font-weight: bold; }
         .excel-paste-zone:focus { background-color: #f1f5f9; border-color: #1e3a8a; outline: none; box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1); }
         
-        /* 刪除按鈕 */
         .remove-btn { color: #ef4444; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: 0.2s; }
         .remove-btn:hover { color: #b91c1c; }
         
-        /* 底部浮動列 */
         .bottom-bar { 
             position: fixed; 
             bottom: 0; left: 0; right: 0; 
@@ -93,12 +85,21 @@
         .totals-display { font-size: 1.15rem; font-weight: 700; color: #334155; }
         .text-danger { color: #e11d48 !important; } 
         .text-primary { color: #1e3a8a !important; }
+        
+        /* 標題列按鈕微調 */
+        .header-container { position: relative; display: flex; justify-content: center; align-items: center; margin-bottom: 1.5rem; }
+        .manual-btn { position: absolute; right: 0; top: 50%; transform: translateY(-50%); text-decoration: none; background: #e2e8f0; color: #334155; padding: 6px 12px; border-radius: 6px; font-size: 0.9rem; font-weight: bold; transition: 0.2s; }
+        .manual-btn:hover { background: #cbd5e1; color: #1e293b; }
     </style>
 </head>
 <body>
 
 <div class="container mt-5">
-    <h2 class="mb-4 text-center fw-bold" style="color: #1e293b;">📄 JW 買賣合約自動產生器</h2>
+    <div class="header-container">
+        <h2 class="m-0 fw-bold" style="color: #1e293b;">📄 JW 買賣合約自動產生器</h2>
+        <!-- 🎯 新增的維護手冊跳轉按鈕 -->
+        <a href="JW_Contract_System_Manual.html" target="_blank" class="manual-btn">📘 維護與更新手冊</a>
+    </div>
 
     <div class="card">
         <div class="card-header">
@@ -204,9 +205,9 @@
                 </div>
             </div>
 
-            <!-- 🎯 願望 1：復活備用大框框 -->
+            <!-- 🎯 更名為：多欄位快速匯入區 -->
             <div class="mb-4">
-                <input type="text" id="excelPaste" class="form-control text-center excel-paste-zone py-2" placeholder="📋 備用大框框：若無法直接點格子貼上，也可點擊此處按 Ctrl+V (支援多欄位整塊貼上)">
+                <input type="text" id="excelPaste" class="form-control text-center excel-paste-zone py-2" placeholder="📋 多欄位快速匯入區：點擊此處按 Ctrl+V，支援整塊複製貼上">
             </div>
 
             <div id="productContainer">
@@ -271,18 +272,15 @@
         document.querySelectorAll('.p-date').forEach(input => input.value = val);
     }
 
-    // 🎯 願望 2：支援 Tab 鍵，在最後一行的日期欄位按下 Tab，會自動新增一列並將焦點移至新品項名稱
     document.getElementById('productContainer').addEventListener('keydown', function(e) {
         if (e.key === 'Tab' && e.target.classList.contains('p-date')) {
             const allRows = Array.from(document.querySelectorAll('.product-row'));
             const currentRow = e.target.closest('.product-row');
             
-            // 確認是不是停在目前最後一列
             if (allRows.indexOf(currentRow) === allRows.length - 1) {
-                e.preventDefault(); // 阻止原本會跳離表格的 Tab 行為
-                addProduct(); // 自動新增一列
+                e.preventDefault(); 
+                addProduct(); 
                 
-                // 將輸入焦點（游標）移動到新列的第一格 (品項名稱)
                 const newRows = document.querySelectorAll('.product-row');
                 const lastRow = newRows[newRows.length - 1];
                 lastRow.querySelector('.p-name').focus();
@@ -290,7 +288,6 @@
         }
     });
 
-    // 儲存格連動貼上
     document.getElementById('productContainer').addEventListener('paste', function(e) {
         if (e.target.tagName !== 'INPUT') return;
         const pasteData = (e.clipboardData || window.clipboardData).getData('text');
@@ -335,7 +332,6 @@
         calculateTotals();
     });
 
-    // 🎯 願望 1：備用大框框貼上邏輯
     document.getElementById('excelPaste').addEventListener('paste', function(e) {
         e.preventDefault();
         const pasteData = (e.clipboardData || window.clipboardData).getData('text');
@@ -343,7 +339,6 @@
         
         const rows = pasteData.split(/\r\n|\n|\r/).filter(r => r.trim() !== '');
         
-        // 如果目前表格只有一列且是空的，就清空它以免礙眼
         const existingRows = document.querySelectorAll('.product-row');
         if (existingRows.length === 1) {
             const pName = existingRows[0].querySelector('.p-name').value;
@@ -366,7 +361,7 @@
         const inputElement = this;
         inputElement.placeholder = "✅ 匯入成功！您可以繼續貼上追加資料...";
         setTimeout(() => { 
-            inputElement.placeholder = "📋 備用大框框：若無法直接點格子貼上，也可點擊此處按 Ctrl+V (支援多欄位整塊貼上)"; 
+            inputElement.placeholder = "📋 多欄位快速匯入區：點擊此處按 Ctrl+V，支援整塊複製貼上"; 
         }, 3000);
     });
 
